@@ -3,7 +3,6 @@ import { Navbar } from './components/Navbar'
 import { Hero } from './components/Hero'
 import { FocusPanel } from './components/FocusPanel'
 import { Loader } from './components/Loader'
-import { StubPage } from './components/StubPage'
 import { SceneFallback } from './components/SceneFallback'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { Hotspots } from './components/Hotspots'
@@ -26,6 +25,8 @@ import type { FocusTarget } from './lib/theme'
 // Сцена грузится отдельным чанком и только когда нужна главная:
 // прямой заход на /services не тянет three.js.
 const Scene = lazy(() => import('./scene/Scene'))
+// «О студии» — собственная 3D-презентация, отдельный чанк
+const AboutPage = lazy(() => import('./pages/about/AboutPage'))
 
 const isCatalogRoot = (to: string) => {
   const url = new URL(to, window.location.href)
@@ -309,7 +310,11 @@ function RouteView({ match }: { match: Match }) {
     case 'contact':
       return <ContactPage />
     case 'about':
-      return <StubPage route="about" />
+      return (
+        <Suspense fallback={<main className="page" id="main" />}>
+          <AboutPage />
+        </Suspense>
+      )
     default:
       return <NotFoundPage />
   }

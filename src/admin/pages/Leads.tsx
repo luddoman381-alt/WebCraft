@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useRouter } from '../../lib/router'
+import { useRouter, withBase } from '../../lib/router'
 import type { Lead, LeadStatus } from '../../data/types'
 import { adminApi, formatDate, LEAD_STATUS_LABEL } from '../api'
 import { Badge, Drawer, errorText, LoadState, PageHead, useConfirm, useLoad, useToast } from '../ui'
@@ -170,7 +170,7 @@ function LeadDetail({ id, onChanged, onClose }: { id: number; onChanged: () => v
               <dt>Услуга</dt>
               <dd>
                 {lead.data.service ? (
-                  <a href={`/services/${lead.data.service}`} target="_blank" rel="noopener" className="a-link">
+                  <a href={withBase(`/services/${lead.data.service}`)} target="_blank" rel="noopener" className="a-link">
                     {lead.data.service} ↗
                   </a>
                 ) : (

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
-import { Link, useRouter } from '../lib/router'
+import { Link, useRouter, withBase } from '../lib/router'
 import { LogoMark } from '../components/Logo'
 import { ApiError } from '../data/http'
 import { adminApi, setUnauthorizedHandler } from './api'
@@ -219,7 +219,7 @@ function Shell({ email, onLogout }: { email: string; onLogout: () => void }) {
           ))}
         </nav>
         <div className="a-side__foot">
-          <a href="/" target="_blank" rel="noopener" className="a-side__link">
+          <a href={withBase('/')} target="_blank" rel="noopener" className="a-side__link">
             <span className="a-side__icon" aria-hidden="true">
               ↗
             </span>

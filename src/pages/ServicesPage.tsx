@@ -4,7 +4,7 @@ import { useResource } from '../data/useResource'
 import type { CategoryId, ServiceSort } from '../data/types'
 import { ServiceCard, ServiceCardSkeleton } from '../components/catalog/ServiceCard'
 import { Footer } from '../components/Footer'
-import { Link, useRouter } from '../lib/router'
+import { appPath, Link, useRouter } from '../lib/router'
 import { ROUTES } from '../lib/routes'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { useReducedMotion } from '../hooks/useMediaQuery'
@@ -62,7 +62,7 @@ export function ServicesPage({ preview = false }: Props) {
       if (category) p.set('category', category)
       if (sort !== 'recommended') p.set('sort', sort)
       const next = `${ROUTES.services.pattern}${p.toString() ? `?${p}` : ''}`
-      if (next !== window.location.pathname + window.location.search) {
+      if (next !== appPath() + window.location.search) {
         navigateDirect(next, { replace: true, state: window.history.state ?? {} })
       }
     }, 250)

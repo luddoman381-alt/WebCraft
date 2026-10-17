@@ -33,7 +33,7 @@ type Props = {
   liveScreen: boolean
 }
 
-function Keyboard({ material }: { material: THREE.Material }) {
+export function Keyboard({ material }: { material: THREE.Material }) {
   const ref = useRef<THREE.InstancedMesh>(null)
   const cols = 14
   const rows = 5

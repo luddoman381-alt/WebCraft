@@ -52,9 +52,24 @@ type RouterValue = {
 
 const RouterContext = createContext<RouterValue | null>(null)
 
+/*
+ * Базовый путь сборки (vite base, например '/WebCraft/' для GitHub Pages).
+ * Внутри приложения пути всегда без него: '/services'; в адресной строке — '/WebCraft/services'.
+ */
+const BASE = import.meta.env.BASE_URL.replace(/\/+$/, '')
+
+/** Путь приложения → адрес в браузере. */
+export const withBase = (path: string) => (BASE && path.startsWith('/') ? BASE + path : path)
+
+/** Адрес в браузере → путь приложения. */
+export function appPath(pathname = window.location.pathname): string {
+  if (BASE && (pathname === BASE || pathname.startsWith(`${BASE}/`))) return pathname.slice(BASE.length) || '/'
+  return pathname
+}
+
 function read(action: Location['action']): Location {
   return {
-    pathname: window.location.pathname,
+    pathname: appPath(),
     search: window.location.search,
     state: (window.history.state as NavState | null) ?? {},
     action,
@@ -69,7 +84,7 @@ function saveScroll() {
 export function RouterProvider({ children }: { children: ReactNode }) {
   const [location, setLocation] = useState<Location>(() => {
     const legacy = legacyHashRedirect()
-    if (legacy) window.history.replaceState({}, '', legacy)
+    if (legacy) window.history.replaceState({}, '', withBase(legacy))
     return read('init')
   })
   const interceptor = useRef<Interceptor | null>(null)
@@ -82,11 +97,11 @@ export function RouterProvider({ children }: { children: ReactNode }) {
   }, [])
 
   const navigateDirect = useCallback((to: string, opts: NavigateOptions = {}) => {
-    const url = new URL(to, window.location.href)
-    const same = url.pathname === window.location.pathname && url.search === window.location.search
+    const url = new URL(to, window.location.origin)
+    const same = url.pathname === appPath() && url.search === window.location.search
     saveScroll()
     const method = opts.replace || same ? 'replaceState' : 'pushState'
-    window.history[method](opts.state ?? {}, '', url.pathname + url.search + url.hash)
+    window.history[method](opts.state ?? {}, '', withBase(url.pathname) + url.search + url.hash)
     setLocation(read(method === 'pushState' ? 'push' : 'replace'))
   }, [])
 
@@ -154,7 +169,7 @@ export function Link({ to, replace, onClick, children, ...rest }: LinkProps) {
     navigate(to, { replace })
   }
   return (
-    <a href={to} onClick={handle} {...rest}>
+    <a href={withBase(to)} onClick={handle} {...rest}>
       {children}
     </a>
   )

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { Link, useRouter } from '../../lib/router'
+import { Link, useRouter, withBase } from '../../lib/router'
 import { ServiceCard } from '../../components/catalog/ServiceCard'
 import { priceLabel, priceSentence } from '../../components/catalog/PriceTag'
 import { EMPTY_TERMINAL } from '../../data/defaults'
@@ -169,7 +169,7 @@ function Editor({ categories, services, service, isNew, onSaved, onDeleted, toas
 
   const category = categories.find((c) => c.id === form.category) ?? null
   const others = services.filter((s) => s.id !== form.id)
-  const publicUrl = `/services/${saved.slug}`
+  const publicUrl = withBase(`/services/${saved.slug}`)
 
   return (
     <div className="a-editor">
