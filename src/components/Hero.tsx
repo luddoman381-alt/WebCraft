@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { hrefFor } from '../lib/routes'
+import { Link } from '../lib/router'
+import { ROUTES } from '../lib/routes'
 
 type Props = {
   ready: boolean
@@ -46,15 +47,15 @@ export function Hero({ ready, hidden, reducedMotion, onExplore }: Props) {
         </p>
 
         <div className="hero__actions" data-reveal>
-          <a href={hrefFor('services')} className="btn btn--primary" tabIndex={hidden ? -1 : 0}>
+          <Link to={ROUTES.services.pattern} className="btn btn--primary" tabIndex={hidden ? -1 : 0}>
             Исследовать услуги
             <span className="btn__arrow" aria-hidden="true">
               →
             </span>
-          </a>
-          <a href={hrefFor('projects')} className="btn btn--ghost" tabIndex={hidden ? -1 : 0}>
+          </Link>
+          <Link to={ROUTES.projects.pattern} className="btn btn--ghost" tabIndex={hidden ? -1 : 0}>
             Посмотреть проекты
-          </a>
+          </Link>
         </div>
 
         <dl className="hero__specs" data-reveal>
@@ -79,7 +80,7 @@ export function Hero({ ready, hidden, reducedMotion, onExplore }: Props) {
         </dl>
       </div>
 
-      <button type="button" className="hero__scroll" onClick={onExplore} tabIndex={hidden ? -1 : 0} aria-label="Прокрутить к интерактивной сцене">
+      <button type="button" className="hero__scroll" onClick={onExplore} tabIndex={hidden ? -1 : 0} aria-label="Перейти в каталог услуг">
         <span className="hero__scroll-track" aria-hidden="true">
           <span className="hero__scroll-thumb" />
         </span>

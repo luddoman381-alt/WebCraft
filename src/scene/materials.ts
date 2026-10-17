@@ -40,6 +40,21 @@ export function createScreenMaterial(map: THREE.Texture) {
   })
 }
 
+/**
+ * «Окно» в canvas: пишет в буфер кадра прозрачный пиксель (без смешивания),
+ * сквозь который виден DOM-сайт под canvas. Глубину пишет как обычная
+ * поверхность, поэтому объекты перед экраном (смартфон) его перекрывают.
+ */
+export function createScreenHoleMaterial() {
+  return new THREE.MeshBasicMaterial({
+    color: '#000000',
+    opacity: 0,
+    blending: THREE.NoBlending,
+    toneMapped: false,
+    fog: false,
+  })
+}
+
 /** Зелёная световая полоса. */
 export function createAccentMaterial(intensity = 2) {
   return new THREE.MeshStandardMaterial({

@@ -3,7 +3,8 @@ import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import { RoundedBox } from '@react-three/drei'
 import * as THREE from 'three'
 import { createLaptopScreenTexture } from './screenTextures'
-import { createAccentMaterial, createBodyMaterial, createGlassMaterial, createScreenMaterial } from './materials'
+import { createAccentMaterial, createBodyMaterial, createGlassMaterial, createScreenHoleMaterial, createScreenMaterial } from './materials'
+import { dive, screenAnchor, screenLight, SCREEN_SIZE } from '../dive/diveStore'
 
 /*
  * Процедурный ноутбук. Размеры в условных единицах сцены (~ метры * 10).
@@ -25,6 +26,11 @@ type Props = {
   onHover: (v: boolean) => void
   onSelect: () => void
   anisotropy: number
+  /**
+   * Экран показывает настоящий DOM-сайт (canvas здесь прозрачен).
+   * false — запасной вариант с процедурной текстурой.
+   */
+  liveScreen: boolean
 }
 
 function Keyboard({ material }: { material: THREE.Material }) {
@@ -64,9 +70,17 @@ function Keyboard({ material }: { material: THREE.Material }) {
   )
 }
 
-export function Laptop({ hovered, focused, dimmed, reducedMotion, onHover, onSelect, anisotropy }: Props) {
+export function Laptop({ hovered, focused, dimmed, reducedMotion, onHover, onSelect, anisotropy, liveScreen }: Props) {
   const lid = useRef<THREE.Group>(null)
   const glowLight = useRef<THREE.PointLight>(null)
+  const anchorRef = useRef<THREE.Object3D>(null)
+
+  useEffect(() => {
+    screenAnchor.current = anchorRef.current
+    return () => {
+      if (screenAnchor.current === anchorRef.current) screenAnchor.current = null
+    }
+  }, [])
 
   const mats = useMemo(() => {
     const screenTex = createLaptopScreenTexture(anisotropy)
@@ -75,6 +89,7 @@ export function Laptop({ hovered, focused, dimmed, reducedMotion, onHover, onSel
       glass: createGlassMaterial(),
       screen: createScreenMaterial(screenTex),
       screenTex,
+      hole: createScreenHoleMaterial(),
       accent: createAccentMaterial(1.6),
       key: new THREE.MeshStandardMaterial({ color: '#0c0f0e', roughness: 0.7, metalness: 0.2 }),
       deck: new THREE.MeshStandardMaterial({ color: '#121715', roughness: 0.55, metalness: 0.6 }),
@@ -91,7 +106,9 @@ export function Laptop({ hovered, focused, dimmed, reducedMotion, onHover, onSel
 
   // Плавная подсветка при наведении / фокусе
   useFrame((state, delta) => {
-    const active = hovered || focused
+    const diving = dive.phase !== 'idle'
+    const active = hovered || focused || diving
+    screenLight.dimTarget = diving ? 0 : dimmed ? 0.62 : active ? 0 : 0.14
     const screenTarget = dimmed ? 0.35 : active ? 1.35 : 0.9
     mats.screen.emissiveIntensity = THREE.MathUtils.damp(mats.screen.emissiveIntensity, screenTarget, 6, delta)
     const accentTarget = dimmed ? 0.4 : active ? 4.2 : 1.6
@@ -102,8 +119,10 @@ export function Laptop({ hovered, focused, dimmed, reducedMotion, onHover, onSel
     }
     if (lid.current) {
       // едва заметное «дыхание» крышки
-      const breathe = reducedMotion ? 0 : Math.sin(state.clock.elapsedTime * 0.6) * 0.012
-      lid.current.rotation.x = -OPEN_ANGLE + Math.PI / 2 + breathe + (active ? -0.025 : 0)
+      // во время перехода крышка неподвижна: камера стыкуется с плоскостью экрана
+      const breathe = reducedMotion || diving ? 0 : Math.sin(state.clock.elapsedTime * 0.6) * 0.012
+      const tilt = !diving && (hovered || focused) ? -0.025 : 0
+      lid.current.rotation.x = -OPEN_ANGLE + Math.PI / 2 + breathe + tilt
     }
   })
 
@@ -148,9 +167,10 @@ export function Laptop({ hovered, focused, dimmed, reducedMotion, onHover, onSel
             <planeGeometry args={[W - 0.06, LID_H - 0.06]} />
           </mesh>
           {/* Экран 16:10 */}
-          <mesh position={[0, 0.03, 0.004]} material={mats.screen}>
-            <planeGeometry args={[W - 0.2, (W - 0.2) / 1.6]} />
+          <mesh position={[0, 0.03, 0.004]} material={liveScreen ? mats.hole : mats.screen}>
+            <planeGeometry args={[SCREEN_SIZE.w, SCREEN_SIZE.h]} />
           </mesh>
+          <object3D ref={anchorRef} position={[0, 0.03, 0.004]} />
           {/* Камера */}
           <mesh position={[0, LID_H / 2 - 0.05, 0.005]}>
             <circleGeometry args={[0.012, 16]} />

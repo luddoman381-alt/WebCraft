@@ -6,22 +6,27 @@ import { LogoMark } from './Logo'
  * тяжёлых ассетов), но привязан к реальным событиям: шрифты → сцена → первый кадр.
  */
 export function Loader({ stage, done }: { stage: 0 | 1 | 2 | 3; done: boolean }) {
-  const [gone, setGone] = useState(false)
+  // смонтирован уже после загрузки (возврат на главную) — не показываем вовсе
+  const [gone, setGone] = useState(done)
   const target = [12, 48, 82, 100][stage]
   const [shown, setShown] = useState(0)
 
   useEffect(() => {
+    if (gone) return
     let raf = 0
+    let v = 0
     const tick = () => {
-      setShown((v) => {
-        const next = v + (target - v) * 0.12
-        return Math.abs(target - next) < 0.5 ? target : next
+      setShown((prev) => {
+        const next = prev + (target - prev) * 0.12
+        v = Math.abs(target - next) < 0.5 ? target : next
+        return v
       })
-      raf = requestAnimationFrame(tick)
+      // цикл останавливается, когда полоса дошла до текущего этапа
+      if (v !== target) raf = requestAnimationFrame(tick)
     }
     raf = requestAnimationFrame(tick)
     return () => cancelAnimationFrame(raf)
-  }, [target])
+  }, [target, gone])
 
   useEffect(() => {
     if (!done) return

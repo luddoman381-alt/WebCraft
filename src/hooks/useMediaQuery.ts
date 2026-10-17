@@ -16,4 +16,7 @@ export function useMediaQuery(query: string): boolean {
   return matches
 }
 
-export const useReducedMotion = () => useMediaQuery('(prefers-reduced-motion: reduce)')
+// ?reduce-motion — принудительный режим для проверки сокращённых анимаций
+const forcedReduce = typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('reduce-motion')
+
+export const useReducedMotion = () => useMediaQuery('(prefers-reduced-motion: reduce)') || forcedReduce

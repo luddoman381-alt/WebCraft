@@ -2,7 +2,7 @@ import { hotspotEls, type HotspotId } from '../scene/hotspotBridge'
 import type { FocusTarget } from '../lib/theme'
 
 const ITEMS: { id: HotspotId; index: string; label: string; hint: string }[] = [
-  { id: 'laptop', index: '01', label: 'Сайты и каталоги', hint: 'приблизить ноутбук' },
+  { id: 'laptop', index: '01', label: 'Сайты и каталоги', hint: 'открыть каталог услуг' },
   { id: 'phone', index: '02', label: 'Мобильные решения', hint: 'приблизить смартфон' },
 ]
 

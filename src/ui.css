@@ -31,17 +31,132 @@
   position: fixed;
   inset: 0;
   z-index: 0;
-  transition: opacity 0.8s var(--ease), filter 0.8s var(--ease);
+  /* фон сцены: canvas прозрачный, а в области экрана ноутбука сквозь него виден DOM-сайт */
+  background: var(--bg);
+  transition: opacity 0.7s var(--ease);
 }
-.scene.is-muted {
-  opacity: 0.28;
-  filter: blur(6px) saturate(0.7);
+.scene.is-hidden {
+  opacity: 0;
+  visibility: hidden;
   pointer-events: none;
+  transition: none;
 }
 .scene-canvas {
+  z-index: 1;
   width: 100% !important;
   height: 100% !important;
   touch-action: pan-y;
+}
+
+/* ---------------------------------------------------------------- Сайт на экране ноутбука */
+
+.laptop-site {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 0;
+  overflow: hidden;
+  transform-origin: 0 0;
+  background: var(--bg);
+  pointer-events: none;
+  backface-visibility: hidden;
+}
+.laptop-site[data-placed='false'] {
+  visibility: hidden;
+}
+/* на финальной стадии экран поднимается над сценой и расширяется до высоты окна */
+.laptop-site.is-top {
+  z-index: 2;
+}
+.laptop-site__viewport {
+  position: relative;
+  overflow: hidden;
+}
+.laptop-site__page {
+  will-change: transform;
+}
+.laptop-site__nav {
+  position: absolute;
+  inset: 0 0 auto 0;
+}
+.laptop-site__nav .nav {
+  position: absolute;
+}
+/* в превью без backdrop-filter: дорого внутри 3D-слоя */
+.laptop-site__nav .nav::before {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: linear-gradient(180deg, rgba(8, 11, 10, 0.94) 0%, rgba(8, 11, 10, 0.82) 100%);
+}
+.laptop-site__glass {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(118deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.015) 32%, transparent 52%);
+  pointer-events: none;
+}
+.laptop-site__dim {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0.14;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- Переход */
+
+.app.is-diving .stage::before,
+.app.is-fading .stage::before {
+  opacity: 0;
+}
+.stage::before {
+  transition: opacity 0.6s var(--ease);
+}
+.app.is-fading .stage,
+.app.is-fading .scene {
+  opacity: 0;
+  transition: opacity 0.2s linear;
+}
+.app.is-diving .hotspot {
+  pointer-events: none;
+}
+
+.dive-cancel {
+  position: fixed;
+  left: 50%;
+  bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 60;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: rgba(8, 11, 10, 0.72);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  font-size: 13px;
+  color: var(--text-2);
+  cursor: pointer;
+  animation: panel-in 0.5s var(--ease) 0.3s both;
+  transition: color 0.3s var(--ease), border-color 0.3s var(--ease);
+}
+.dive-cancel:hover {
+  color: var(--text);
+  border-color: var(--line-strong);
+}
+.dive-cancel kbd {
+  padding: 1px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--hairline);
+  font-family: var(--font-mono);
+  font-size: 10px;
+}
+@media (hover: none) {
+  .dive-cancel kbd {
+    display: none;
+  }
 }
 
 /* Затемнение слева, чтобы текст читался поверх объектов */
@@ -798,12 +913,11 @@
 /* ---------------------------------------------------------------- Заглушки */
 
 .stub {
-  position: relative;
-  z-index: 10;
-  min-height: 100svh;
-  display: grid;
-  place-items: center;
-  padding: calc(var(--nav-h) + 32px) var(--gutter) 48px;
+  display: flex;
+  flex-direction: column;
+}
+.stub > .stub__card {
+  margin: calc(var(--nav-h) + 64px) auto 96px;
 }
 .stub__card {
   width: min(620px, 100%);
@@ -1049,7 +1163,8 @@
   .hero__inner {
     width: min(640px, 100%);
   }
-  .hero__meta {
+  .hero__meta,
+  .hero__specs {
     display: none;
   }
   .focus-panel {

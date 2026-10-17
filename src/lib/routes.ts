@@ -1,76 +1,103 @@
-import { useCallback, useEffect, useState } from 'react'
-
 /*
- * Минимальный hash-роутер для этапа 1. Структура маршрутов вынесена в
- * конфиг, чтобы на следующем этапе заменить хук на react-router без
- * изменения компонентов навигации.
+ * Таблица маршрутов. Единственное место, где описаны пути, заголовки
+ * и пункты навигации. Механизм — History API (см. router.tsx).
  */
 
-export type RouteId = 'home' | 'services' | 'projects' | 'about' | 'contacts' | 'brief'
+export type RouteId = 'home' | 'services' | 'service' | 'projects' | 'about' | 'contact' | 'notFound'
 
 export type RouteDef = {
   id: RouteId
-  path: string
+  /** шаблон пути; `:param` — именованный сегмент */
+  pattern: string
   title: string
   description: string
 }
 
-export const ROUTES: Record<RouteId, RouteDef> = {
-  home: { id: 'home', path: '/', title: 'Главная', description: '' },
+export const ROUTES: Record<Exclude<RouteId, 'notFound'>, RouteDef> = {
+  home: {
+    id: 'home',
+    pattern: '/',
+    title: 'WebCraft — Сайты и автоматизация',
+    description: 'Студия разработки сайтов, каталогов и автоматизации бизнеса.',
+  },
   services: {
     id: 'services',
-    path: '/services',
+    pattern: '/services',
     title: 'Услуги',
-    description: 'Разработка сайтов, каталогов, интеграций и автоматизации бизнес-процессов.',
+    description: 'Каталог услуг WebCraft: сайты, интернет-магазины, каталоги, боты, автоматизация и интеграции.',
+  },
+  service: {
+    id: 'service',
+    pattern: '/services/:slug',
+    title: 'Услуга',
+    description: '',
   },
   projects: {
     id: 'projects',
-    path: '/projects',
+    pattern: '/projects',
     title: 'Проекты',
-    description: 'Кейсы студии: интернет-магазины, корпоративные платформы, внутренние сервисы.',
+    description: 'Направления и демонстрационные концепты студии WebCraft.',
   },
   about: {
     id: 'about',
-    path: '/about',
+    pattern: '/about',
     title: 'О студии',
     description: 'Команда, подход к разработке и принципы качества WebCraft.',
   },
-  contacts: {
-    id: 'contacts',
-    path: '/contacts',
+  contact: {
+    id: 'contact',
+    pattern: '/contact',
     title: 'Контакты',
-    description: 'Как с нами связаться и где мы находимся.',
-  },
-  brief: {
-    id: 'brief',
-    path: '/brief',
-    title: 'Обсудить проект',
-    description: 'Короткий бриф: задача, сроки, бюджет — ответим в течение рабочего дня.',
+    description: 'Обсудить проект с WebCraft.',
   },
 }
 
-export const NAV_ITEMS: RouteId[] = ['services', 'projects', 'about', 'contacts']
+export const NAV_ITEMS: { route: Exclude<RouteId, 'notFound' | 'service' | 'home'>; label: string }[] = [
+  { route: 'services', label: 'Услуги' },
+  { route: 'projects', label: 'Проекты' },
+  { route: 'about', label: 'О студии' },
+  { route: 'contact', label: 'Контакты' },
+]
 
-export const hrefFor = (id: RouteId) => `#${ROUTES[id].path}`
+export type Match = { id: RouteId; params: Record<string, string> }
 
-function parse(): RouteId {
-  const path = window.location.hash.replace(/^#/, '') || '/'
-  const found = Object.values(ROUTES).find((r) => r.path === path)
-  return found ? found.id : 'home'
+const compiled = Object.values(ROUTES).map((r) => {
+  const keys: string[] = []
+  const source = r.pattern
+    .split('/')
+    .map((seg) => {
+      if (seg.startsWith(':')) {
+        keys.push(seg.slice(1))
+        return '([^/]+)'
+      }
+      return seg.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    })
+    .join('/')
+  return { id: r.id, keys, re: new RegExp(`^${source || '/'}/?$`) }
+})
+
+export function matchPath(pathname: string): Match {
+  for (const c of compiled) {
+    const m = c.re.exec(pathname)
+    if (m) {
+      const params: Record<string, string> = {}
+      c.keys.forEach((k, i) => (params[k] = decodeURIComponent(m[i + 1])))
+      return { id: c.id, params }
+    }
+  }
+  return { id: 'notFound', params: {} }
 }
 
-export function useRoute() {
-  const [route, setRoute] = useState<RouteId>(parse)
+/** Путь до маршрута с подстановкой параметров. */
+export function pathFor(id: Exclude<RouteId, 'notFound'>, params: Record<string, string> = {}) {
+  return ROUTES[id].pattern.replace(/:([a-zA-Z]+)/g, (_, k: string) => encodeURIComponent(params[k] ?? ''))
+}
 
-  useEffect(() => {
-    const onChange = () => setRoute(parse())
-    window.addEventListener('hashchange', onChange)
-    return () => window.removeEventListener('hashchange', onChange)
-  }, [])
-
-  const navigate = useCallback((id: RouteId) => {
-    window.location.hash = ROUTES[id].path
-  }, [])
-
-  return { route, navigate }
+/** Старые hash-ссылки этапа 1 (#/services, #/contacts) → реальные пути. */
+export function legacyHashRedirect(): string | null {
+  const h = window.location.hash
+  if (!h.startsWith('#/')) return null
+  const p = h.slice(1)
+  const map: Record<string, string> = { '/contacts': '/contact', '/brief': '/contact' }
+  return map[p] ?? p
 }

@@ -1,7 +1,6 @@
 import { useEffect, useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
-import type { FocusTarget } from '../lib/theme'
-import { hrefFor, type RouteId } from '../lib/routes'
+import { Link } from '../lib/router'
 
 type Content = {
   index: string
@@ -9,30 +8,22 @@ type Content = {
   title: string
   text: string
   points: string[]
-  cta: { label: string; route: RouteId }
+  cta: { label: string; to: string }
 }
 
-const CONTENT: Record<'laptop' | 'phone', Content> = {
-  laptop: {
-    index: '01',
-    kicker: 'Веб-платформы',
-    title: 'Сайты и каталоги',
-    text: 'Корпоративные сайты, интернет-магазины и каталоги с быстрой загрузкой, продуманной структурой и удобной админ-панелью.',
-    points: ['Дизайн-система и UI', 'Каталоги на тысячи позиций', 'SEO и производительность'],
-    cta: { label: 'Услуги разработки', route: 'services' },
-  },
+const CONTENT: Record<'phone', Content> = {
   phone: {
     index: '02',
     kicker: 'Мобильный опыт',
     title: 'Мобильные решения и автоматизация',
     text: 'Интерфейсы, которые одинаково хорошо работают на смартфоне, и автоматизация процессов: заявки, CRM, уведомления, интеграции.',
     points: ['Mobile-first интерфейсы', 'Telegram-боты и уведомления', 'Интеграции с CRM и 1С'],
-    cta: { label: 'Автоматизация', route: 'services' },
+    cta: { label: 'Автоматизация', to: '/services?category=automation' },
   },
 }
 
 type Props = {
-  focus: FocusTarget
+  focus: 'phone' | null
   reducedMotion: boolean
   onBack: () => void
 }
@@ -83,9 +74,9 @@ export function FocusPanel({ focus, reducedMotion, onBack }: Props) {
         ))}
       </ul>
       <div className="focus-panel__actions" data-panel-reveal>
-        <a href={hrefFor(c.cta.route)} className="btn btn--primary btn--sm">
+        <Link to={c.cta.to} className="btn btn--primary btn--sm">
           {c.cta.label} <span aria-hidden="true">→</span>
-        </a>
+        </Link>
         <span className="focus-panel__demo">Демо-состояние · этап 1</span>
       </div>
     </div>
