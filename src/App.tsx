@@ -27,6 +27,8 @@ import type { FocusTarget } from './lib/theme'
 const Scene = lazy(() => import('./scene/Scene'))
 // «О студии» — собственная 3D-презентация, отдельный чанк
 const AboutPage = lazy(() => import('./pages/about/AboutPage'))
+// UpBusiness — отдельное направление со своей атмосферой, отдельный чанк
+const UpBusinessPage = lazy(() => import('./pages/upbusiness/UpBusinessPage'))
 
 const isCatalogRoot = (to: string) => {
   const url = new URL(to, window.location.href)
@@ -106,6 +108,28 @@ export default function App() {
     setHovered(null)
     diveCtl.start()
   }, [diveCtl])
+
+  /* ---------------------------------------------------------- переход в UpBusiness */
+
+  // зелёный свет из точки нажатия сменяется сине-чёрной атмосферой, затем открывается раздел
+  const [realm, setRealm] = useState<{ x: number; y: number; leaving: boolean } | null>(null)
+  const realmTimers = useRef<number[]>([])
+  const startUpBusiness = useCallback(
+    (origin: { x: number; y: number }) => {
+      if (realm || dive.phase !== 'idle') return // защита от повторных нажатий и от наложения на погружение
+      setRealm({ ...origin, leaving: false })
+      const swap = reducedMotion ? 240 : 1050
+      realmTimers.current.push(
+        window.setTimeout(() => {
+          navigateDirect(ROUTES.upbusiness.pattern)
+          setRealm((r) => r && { ...r, leaving: true })
+        }, swap),
+        window.setTimeout(() => setRealm(null), swap + (reducedMotion ? 300 : 950)),
+      )
+    },
+    [realm, reducedMotion, navigateDirect],
+  )
+  useEffect(() => () => realmTimers.current.forEach((t) => window.clearTimeout(t)), [])
 
   // Любой переход с главной на /services (кнопка, пункт меню, ноутбук) — через погружение
   const matchRef = useRef<Match>(match)
@@ -224,6 +248,7 @@ export default function App() {
         isHome ? 'is-home' : 'is-sub',
         diving ? 'is-diving' : '',
         phase === 'fading' ? 'is-fading' : '',
+        match.id === 'upbusiness' ? 'is-ub' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -243,6 +268,7 @@ export default function App() {
           reducedMotion={reducedMotion}
           useFallback={useFallback}
           onExplore={startDive}
+          onUpBusiness={startUpBusiness}
           onFocus={setFocus}
           onHover={setHovered}
           onBack={back}
@@ -293,6 +319,18 @@ export default function App() {
 
       {/* загрузчик — только у 3D-главной; остальные страницы доступны сразу */}
       {isHome && !useFallback && <Loader stage={stage} done={ready} />}
+
+      {realm && (
+        <div
+          className={`realm${realm.leaving ? ' is-leaving' : ''}${reducedMotion ? ' is-reduced' : ''}`}
+          style={{ '--x': `${realm.x}px`, '--y': `${realm.y}px` } as React.CSSProperties}
+          aria-hidden="true"
+        >
+          <div className="realm__green" />
+          <div className="realm__veil" />
+          <div className="realm__blue" />
+        </div>
+      )}
     </div>
   )
 }
@@ -309,6 +347,12 @@ function RouteView({ match }: { match: Match }) {
       return <ProjectsPage />
     case 'contact':
       return <ContactPage />
+    case 'upbusiness':
+      return (
+        <Suspense fallback={<main className="page ub-boot" id="main" />}>
+          <UpBusinessPage />
+        </Suspense>
+      )
     case 'about':
       return (
         <Suspense fallback={<main className="page" id="main" />}>
@@ -328,19 +372,20 @@ type HomeProps = {
   reducedMotion: boolean
   useFallback: boolean
   onExplore: () => void
+  onUpBusiness: (origin: { x: number; y: number }) => void
   onFocus: (t: FocusTarget) => void
   onHover: (t: FocusTarget) => void
   onBack: () => void
   onLaptop: () => void
 }
 
-function HomeOverlay({ ready, busy, focus, hovered, reducedMotion, useFallback, onExplore, onFocus, onHover, onBack, onLaptop }: HomeProps) {
+function HomeOverlay({ ready, busy, focus, hovered, reducedMotion, useFallback, onExplore, onUpBusiness, onFocus, onHover, onBack, onLaptop }: HomeProps) {
   useDocumentMeta(ROUTES.home.title, ROUTES.home.description)
   const hideHero = !!focus || busy
 
   return (
     <main className="stage" id="main" tabIndex={-1}>
-      <Hero ready={ready} hidden={hideHero} reducedMotion={reducedMotion} onExplore={onExplore} />
+      <Hero ready={ready} hidden={hideHero} reducedMotion={reducedMotion} onExplore={onExplore} onUpBusiness={onUpBusiness} />
       {!useFallback && (
         <Hotspots
           hidden={!!focus || !ready || busy}

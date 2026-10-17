@@ -3,7 +3,7 @@
  * и пункты навигации. Механизм — History API (см. router.tsx).
  */
 
-export type RouteId = 'home' | 'services' | 'service' | 'projects' | 'about' | 'contact' | 'notFound'
+export type RouteId = 'home' | 'services' | 'service' | 'projects' | 'about' | 'contact' | 'upbusiness' | 'notFound'
 
 export type RouteDef = {
   id: RouteId
@@ -43,6 +43,12 @@ export const ROUTES: Record<Exclude<RouteId, 'notFound'>, RouteDef> = {
     pattern: '/about',
     title: 'О студии',
     description: 'Команда, подход к разработке и принципы качества WebCraft.',
+  },
+  upbusiness: {
+    id: 'upbusiness',
+    pattern: '/upbusiness',
+    title: 'UpBusiness — технологии для нового уровня бизнеса',
+    description: 'UpBusiness — направление WebCraft: ИИ, автоматизация, цифровые продукты и продвижение как единая система развития бизнеса.',
   },
   contact: {
     id: 'contact',
