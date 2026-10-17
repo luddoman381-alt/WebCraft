@@ -14,6 +14,7 @@ export function ProjectsPage() {
   useDocumentMeta(ROUTES.projects.title, ROUTES.projects.description)
 
   const serviceById = new Map(catalog.data?.services.map((s) => [s.id, s]) ?? [])
+  const hasConcepts = !!projects.data?.some((p) => p.kind === 'concept')
 
   return (
     <main className="page projects" id="main">
@@ -30,13 +31,15 @@ export function ProjectsPage() {
         </div>
       </header>
 
+      {hasConcepts && (
       <div className="notice" role="note">
         <span className="notice__badge">DEMO</span>
         <p>
-          Все записи на этой странице — <strong>демонстрационные концепты</strong>, а не реальные клиентские проекты. Реальные кейсы
+          Записи с пометкой «Концепт» — <strong>демонстрационные концепты</strong>, а не реальные клиентские проекты. Реальные кейсы
           будут добавлены после согласования с клиентами.
         </p>
       </div>
+      )}
 
       {projects.status === 'loading' && (
         <div className="grid grid--2" aria-busy="true">
@@ -61,17 +64,24 @@ export function ProjectsPage() {
         <div className="grid grid--2">
           {projects.data.map((p) => (
             <article key={p.id} className="project" aria-labelledby={`p-${p.id}`}>
-              <ServiceCover cover={p.cover} label="Концепт" />
+              <ServiceCover cover={p.cover} label={p.kind === 'concept' ? 'Концепт' : 'Кейс'} />
               <div className="project__body">
                 <h2 className="project__title" id={`p-${p.id}`}>
                   {p.title}
                 </h2>
                 <p className="project__text">{p.summary}</p>
                 <ul className="project__tags">
-                  {p.tags.map((t) => (
-                    <li key={t}>{t}</li>
+                  {p.tags.map((t, i) => (
+                    <li key={i}>{t}</li>
                   ))}
                 </ul>
+                {p.kind === 'case' && p.url && (
+                  <p className="project__services">
+                    <a href={p.url} target="_blank" rel="noopener noreferrer">
+                      Открыть проект ↗
+                    </a>
+                  </p>
+                )}
                 {p.services.length > 0 && (
                   <p className="project__services">
                     Услуги:{' '}

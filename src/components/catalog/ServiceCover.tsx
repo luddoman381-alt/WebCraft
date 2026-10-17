@@ -8,7 +8,8 @@ export function ServiceCover({ cover, label, size = 'card' }: { cover: Cover; la
   if (cover.image) {
     return (
       <div className={`cover cover--${size}`}>
-        <img src={cover.image.src} alt={cover.image.alt} width={cover.image.width} height={cover.image.height} loading="lazy" />
+        <img src={cover.image.src} alt={cover.image.alt} loading="lazy" decoding="async" />
+        {label && <span className="cover__label">{label}</span>}
       </div>
     )
   }

@@ -4,16 +4,29 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
+    "dev": "node scripts/dev.mjs",
+    "dev:qa": "node scripts/dev.mjs --qa",
+    "dev:web": "vite",
+    "server": "node server/index.ts",
     "build": "tsc -b && vite build",
+    "start": "node server/index.ts --static",
     "lint": "oxlint",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "db:migrate": "node server/cli/db.ts migrate",
+    "db:seed": "node server/cli/db.ts seed",
+    "admin:create": "node server/cli/admin.ts create",
+    "admin:password": "node server/cli/admin.ts password",
+    "admin:list": "node server/cli/admin.ts list",
+    "admin:delete": "node server/cli/admin.ts delete",
+    "start:qa": "node server/index.ts --static --qa"
   },
   "dependencies": {
+    "@hono/node-server": "^2.1.5",
     "@react-three/drei": "^10.7.9",
     "@react-three/fiber": "^9.8.2",
     "@react-three/postprocessing": "^3.2.0",
     "gsap": "^3.15.0",
+    "hono": "^4.13.13",
     "postprocessing": "^6.39.5",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
@@ -28,5 +41,8 @@
     "oxlint": "^1.81.0",
     "typescript": "~6.0.2",
     "vite": "^8.3.0"
+  },
+  "engines": {
+    "node": ">=24"
   }
 }

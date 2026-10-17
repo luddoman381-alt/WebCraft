@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { LogoMark } from './Logo'
 import { Link, useRouter } from '../lib/router'
 import { NAV_ITEMS, ROUTES, type RouteId } from '../lib/routes'
+import { useSiteSettings } from '../data/useSiteSettings'
 
 type Props = {
   onHome?: () => void
@@ -78,6 +79,7 @@ type ViewProps = {
 }
 
 function NavbarView({ current, preview, open = false, onToggle, onHome, panelRef, toggleRef }: ViewProps) {
+  const { cta } = useSiteSettings()
   return (
     <header className={`nav${open ? ' is-open' : ''}${preview ? ' nav--preview' : ''}`}>
       <div className="nav__bar">
@@ -107,7 +109,7 @@ function NavbarView({ current, preview, open = false, onToggle, onHome, panelRef
           </ul>
           <span className="nav__divider" aria-hidden="true" />
           <Link to={ROUTES.contact.pattern} className="btn btn--primary btn--sm">
-            Обсудить проект
+            {cta.navButton}
             <span className="btn__arrow" aria-hidden="true">
               →
             </span>
@@ -147,7 +149,7 @@ function NavbarView({ current, preview, open = false, onToggle, onHome, panelRef
               ))}
             </ul>
             <Link to={ROUTES.contact.pattern} className="btn btn--primary btn--block">
-              Обсудить проект <span aria-hidden="true">→</span>
+              {cta.navButton} <span aria-hidden="true">→</span>
             </Link>
           </nav>
         </div>

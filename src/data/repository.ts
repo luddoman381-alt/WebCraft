@@ -1,36 +1,10 @@
-import type { CategoryId, ProjectConcept, Service, ServiceCategory, ServiceQuery } from './types'
-import { DEMO_CATEGORIES, DEMO_PROJECTS, DEMO_SERVICES } from './demo/catalog'
+import type { CategoryId, Project, Service, ServiceCategory, ServiceQuery, SiteSettings } from './types'
+import { api } from './http'
 
 /*
- * Единый слой доступа к контенту. Компоненты не знают, откуда данные:
- * сейчас — демонстрационный источник, позднее — backend API.
- * Чтобы переключиться, достаточно реализовать ContentSource и передать
- * его в setContentSource().
+ * Единый слой доступа к публичному контенту. Источник — API сервера
+ * (только опубликованные записи). Компоненты не знают, откуда данные.
  */
-
-export interface ContentSource {
-  listServices(): Promise<Service[]>
-  listCategories(): Promise<ServiceCategory[]>
-  listProjects(): Promise<ProjectConcept[]>
-}
-
-/** Имитация сетевой задержки демо-источника — чтобы состояния загрузки были видны и проверяемы. */
-const DEMO_LATENCY_MS = 350
-
-const wait = <T,>(value: T) => new Promise<T>((r) => setTimeout(() => r(structuredClone(value)), DEMO_LATENCY_MS))
-
-const demoSource: ContentSource = {
-  listServices: () => wait(DEMO_SERVICES),
-  listCategories: () => wait(DEMO_CATEGORIES),
-  listProjects: () => wait(DEMO_PROJECTS),
-}
-
-let source: ContentSource = demoSource
-
-export function setContentSource(next: ContentSource) {
-  source = next
-  cache.clear()
-}
 
 /* ------------------------------------------------------------------ кэш */
 
@@ -53,31 +27,32 @@ function cached<T>(key: string, load: () => Promise<T>): Entry<T> {
       throw e
     },
   )
+  // необработанный отказ не должен всплывать в консоль — ошибку показывает интерфейс
+  entry.promise.catch(() => {})
   cache.set(key, entry as Entry<unknown>)
   return entry
 }
 
 export type CatalogData = { services: Service[]; categories: ServiceCategory[] }
 
-/** Опубликованные услуги и категории. Один запрос на сессию, далее — из кэша. */
+/** Опубликованные услуги и видимые категории. Один запрос, далее — из кэша. */
 export function catalogResource() {
   return cached<CatalogData>('catalog', async () => {
-    const [services, categories] = await Promise.all([source.listServices(), source.listCategories()])
-    return {
-      services: services.filter((s) => s.status === 'published'),
-      categories: [...categories].sort((a, b) => a.order - b.order),
-    }
+    const data = await api<CatalogData>('/api/catalog')
+    return { services: data.services, categories: [...data.categories].sort((a, b) => a.order - b.order) }
   })
 }
 
 export function projectsResource() {
-  return cached<ProjectConcept[]>('projects', async () =>
-    (await source.listProjects()).filter((p) => p.status === 'published'),
-  )
+  return cached<Project[]>('projects', () => api<Project[]>('/api/projects'))
 }
 
-/** Сбросить кэш (после ошибки или при обновлении данных). */
-export function invalidate(key?: 'catalog' | 'projects') {
+export function settingsResource() {
+  return cached<SiteSettings>('settings', () => api<SiteSettings>('/api/settings'))
+}
+
+/** Сбросить кэш: после ошибки или после сохранения в админ-панели. */
+export function invalidate(key?: 'catalog' | 'projects' | 'settings') {
   if (key) cache.delete(key)
   else cache.clear()
 }
@@ -97,7 +72,9 @@ export function queryServices(data: CatalogData, query: ServiceQuery): Service[]
     if (query.category && s.category !== query.category) return false
     if (!words.length) return true
     // совпадение по началу слова: «бот» находит «боты», но не «работа»
-    const hay = normalize([s.title, s.shortDescription, ...s.fullDescription, ...s.features].join(' '))
+    const hay = normalize(
+      [s.title, s.shortDescription, ...s.fullDescription, ...s.features, ...s.benefits, ...s.deliverables].join(' '),
+    )
       .split(/[^\p{L}\p{N}]+/u)
       .filter(Boolean)
     return words.every((w) => hay.some((h) => h.startsWith(w)))
@@ -124,9 +101,7 @@ export function relatedServices(data: CatalogData, service: Service, limit = 3):
   const explicit = service.related.map((id) => byId.get(id)).filter((s): s is Service => !!s)
   if (explicit.length >= limit) return explicit.slice(0, limit)
   // добираем услугами той же категории
-  const extra = data.services.filter(
-    (s) => s.id !== service.id && s.category === service.category && !explicit.includes(s),
-  )
+  const extra = data.services.filter((s) => s.id !== service.id && s.category === service.category && !explicit.includes(s))
   return [...explicit, ...extra].slice(0, limit)
 }
 

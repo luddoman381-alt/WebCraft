@@ -1,22 +1,21 @@
 import type { Currency, PriceDisplay } from '../../data/types'
 
 const fmt = (amount: number, currency: Currency) =>
-  new Intl.NumberFormat('ru-RU', { style: 'currency', currency, maximumFractionDigits: 0 }).format(amount)
+  // narrowSymbol: «₸», «₽» вместо кодов KZT/RUB
+  new Intl.NumberFormat('ru-RU', { style: 'currency', currency, currencyDisplay: 'narrowSymbol', maximumFractionDigits: 0 }).format(amount)
 
-/** Текст цены по правилам отображения. Без явной публичной цены — индивидуальный расчёт. */
+/** Текст цены по правилам отображения. Без публичной суммы — индивидуальный расчёт. */
 export function priceLabel(p: PriceDisplay): string {
-  if (!p.visible) return 'Индивидуальный расчёт'
   const price = p.price
-  switch (price.kind) {
-    case 'fixed':
-      return fmt(price.amount, price.currency)
-    case 'from':
-      return `от ${fmt(price.amount, price.currency)}`
-    case 'range':
-      return `${fmt(price.min, price.currency)} – ${fmt(price.max, price.currency)}`
-    default:
-      return 'Индивидуальный расчёт'
-  }
+  if (!p.visible || price.kind === 'individual') return 'Рассчитывается индивидуально'
+  if (price.kind === 'fixed') return fmt(price.amount, price.currency)
+  return `от ${fmt(price.amount, price.currency)}`
+}
+
+/** «Рассчитывается индивидуально» → «рассчитывается индивидуально» (только первая буква). */
+export const priceSentence = (p: PriceDisplay) => {
+  const s = priceLabel(p)
+  return s.charAt(0).toLowerCase() + s.slice(1)
 }
 
 export function PriceTag({ pricing, withNote = false }: { pricing: PriceDisplay; withNote?: boolean }) {

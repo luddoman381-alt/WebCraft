@@ -1,6 +1,7 @@
 import { catalogResource, findCategory, findService, invalidate, relatedServices } from '../data/repository'
 import { useResource } from '../data/useResource'
-import { WORK_PROCESS } from '../data/demo/catalog'
+import { WORK_PROCESS } from '../data/content'
+import { useSiteSettings } from '../data/useSiteSettings'
 import { ServiceCover } from '../components/catalog/ServiceCover'
 import { ServiceCard } from '../components/catalog/ServiceCard'
 import { PriceTag } from '../components/catalog/PriceTag'
@@ -14,6 +15,7 @@ const invalidateCatalog = () => invalidate('catalog')
 
 export function ServicePage({ slug }: { slug: string }) {
   const res = useResource(catalogResource, invalidateCatalog)
+  const { cta } = useSiteSettings()
   const data = res.status === 'ready' ? res.data : null
   const service = data ? findService(data, slug) : null
 
@@ -83,7 +85,7 @@ export function ServicePage({ slug }: { slug: string }) {
           <p className="service__lead">{service.shortDescription}</p>
           <div className="service__actions">
             <Link to={contactHref} className="btn btn--primary">
-              Обсудить проект <span aria-hidden="true">→</span>
+              {cta.serviceButton} <span aria-hidden="true">→</span>
             </Link>
             <Link to={ROUTES.services.pattern} className="btn btn--ghost">
               Весь каталог
@@ -112,13 +114,42 @@ export function ServicePage({ slug }: { slug: string }) {
             </h2>
             <ul className="features">
               {service.features.map((f, i) => (
-                <li key={f}>
+                <li key={i}>
                   <span className="features__index">{String(i + 1).padStart(2, '0')}</span>
                   {f}
                 </li>
               ))}
             </ul>
           </section>
+
+          {service.benefits.length > 0 && (
+            <section aria-labelledby="benefits-title">
+              <h2 id="benefits-title" className="section-title">
+                Преимущества
+              </h2>
+              <ul className="checklist">
+                {service.benefits.map((b, i) => (
+                  <li key={i}>{b}</li>
+                ))}
+              </ul>
+            </section>
+          )}
+
+          {service.deliverables.length > 0 && (
+            <section aria-labelledby="deliverables-title">
+              <h2 id="deliverables-title" className="section-title">
+                Состав работ
+              </h2>
+              <ol className="deliverables">
+                {service.deliverables.map((d, i) => (
+                  <li key={i}>
+                    <span className="features__index">{String(i + 1).padStart(2, '0')}</span>
+                    {d}
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )}
 
           <section aria-labelledby="process-title">
             <h2 id="process-title" className="section-title">
@@ -147,7 +178,7 @@ export function ServicePage({ slug }: { slug: string }) {
               Рассчитываем после короткого разбора задачи: объём, интеграции и сроки.
             </p>
             <Link to={contactHref} className="btn btn--primary btn--block">
-              Обсудить проект
+              {cta.serviceButton}
             </Link>
           </div>
         </aside>
@@ -160,7 +191,7 @@ export function ServicePage({ slug }: { slug: string }) {
           </h2>
           <div className="grid grid--3">
             {related.map((s, i) => (
-              <ServiceCard key={s.id} service={s} category={findCategory(data, s.category)} index={i} />
+              <ServiceCard key={s.id} service={s} category={findCategory(data, s.category)} index={i} terminal />
             ))}
           </div>
         </section>
@@ -172,7 +203,7 @@ export function ServicePage({ slug }: { slug: string }) {
           <p className="cta-band__text">Опишите задачу — ответим, с чего начать и как будет устроена работа.</p>
         </div>
         <Link to={contactHref} className="btn btn--primary">
-          Обсудить проект <span aria-hidden="true">→</span>
+          {cta.serviceButton} <span aria-hidden="true">→</span>
         </Link>
       </section>
 

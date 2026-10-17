@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
 import { Link } from '../lib/router'
 import { ROUTES } from '../lib/routes'
+import { useSiteSettings } from '../data/useSiteSettings'
 
 type Props = {
   ready: boolean
@@ -12,6 +13,7 @@ type Props = {
 
 export function Hero({ ready, hidden, reducedMotion, onExplore }: Props) {
   const root = useRef<HTMLElement>(null)
+  const { cta } = useSiteSettings()
 
   // Вход: построчное появление после загрузки сцены
   useLayoutEffect(() => {
@@ -48,13 +50,13 @@ export function Hero({ ready, hidden, reducedMotion, onExplore }: Props) {
 
         <div className="hero__actions" data-reveal>
           <Link to={ROUTES.services.pattern} className="btn btn--primary" tabIndex={hidden ? -1 : 0}>
-            Исследовать услуги
+            {cta.heroPrimary}
             <span className="btn__arrow" aria-hidden="true">
               →
             </span>
           </Link>
           <Link to={ROUTES.projects.pattern} className="btn btn--ghost" tabIndex={hidden ? -1 : 0}>
-            Посмотреть проекты
+            {cta.heroSecondary}
           </Link>
         </div>
 

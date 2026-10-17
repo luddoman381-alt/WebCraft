@@ -1108,3 +1108,223 @@
     font-size: 19px;
   }
 }
+
+/* ---------------------------------------------------------------- Терминальный эффект карточки */
+
+.card--terminal {
+  isolation: isolate;
+}
+.card.is-terminal {
+  border-color: rgba(57, 255, 136, 0.55);
+  box-shadow: 0 0 0 1px rgba(57, 255, 136, 0.25), 0 24px 60px -30px rgba(57, 255, 136, 0.45);
+}
+.term {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 22px 18px;
+  border-radius: inherit;
+  background:
+    repeating-linear-gradient(0deg, rgba(57, 255, 136, 0.025) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 80% at 0% 0%, #07140c 0%, #030504 60%);
+  color: var(--green);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  opacity: 0;
+  visibility: hidden;
+  transform: scale(0.985);
+  /* карточка под оверлеем по-прежнему кликается (растянутая ссылка) */
+  pointer-events: none;
+  transition:
+    opacity 0.32s var(--ease),
+    transform 0.4s var(--ease),
+    visibility 0s linear 0.4s;
+}
+.term.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition:
+    opacity 0.28s var(--ease),
+    transform 0.4s var(--ease),
+    visibility 0s;
+}
+.term__screen {
+  flex: 1;
+  overflow: hidden;
+}
+.term__line {
+  margin: 0 0 4px;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  text-shadow: 0 0 8px rgba(57, 255, 136, 0.35);
+}
+.term__line--title {
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(57, 255, 136, 0.22);
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: #6dffab;
+  text-shadow: 0 0 12px rgba(57, 255, 136, 0.55);
+}
+.term__line--spec {
+  color: #b9f5cf;
+}
+.term__line--cap {
+  color: var(--green);
+}
+.term__line--price {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(57, 255, 136, 0.22);
+  color: #e6fff0;
+}
+.term__cursor {
+  display: inline-block;
+  width: 0.6em;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: -0.18em;
+  background: var(--green);
+  box-shadow: 0 0 8px rgba(57, 255, 136, 0.7);
+  animation: term-blink 1.05s steps(1) infinite;
+}
+@keyframes term-blink {
+  50% {
+    opacity: 0;
+  }
+}
+.term__close {
+  align-self: flex-start;
+  margin-top: 10px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(57, 255, 136, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  font: inherit;
+  font-size: 12px;
+  color: var(--green);
+  cursor: pointer;
+  pointer-events: auto;
+}
+.term:not(.is-active) .term__close {
+  pointer-events: none;
+}
+.card__info {
+  position: relative;
+  z-index: 3;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line-strong);
+  border-radius: 999px;
+  background: rgba(8, 11, 10, 0.7);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  color: var(--green);
+  cursor: pointer;
+}
+.card.is-terminal .card__info {
+  visibility: hidden;
+}
+@media (prefers-reduced-motion: reduce) {
+  .term__cursor {
+    animation: none;
+  }
+}
+
+/* ---------------------------------------------------------------- Услуга: преимущества и состав работ */
+
+.checklist {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.checklist li {
+  position: relative;
+  padding: 2px 0 2px 30px;
+  font-size: 16px;
+  color: #c9d4cc;
+}
+.checklist li::before {
+  content: '';
+  position: absolute;
+  left: 4px;
+  top: 7px;
+  width: 12px;
+  height: 7px;
+  border-left: 2px solid var(--green);
+  border-bottom: 2px solid var(--green);
+  transform: rotate(-45deg);
+}
+.deliverables {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.deliverables li {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  border-left: 2px solid var(--line-strong);
+  background: linear-gradient(90deg, rgba(57, 255, 136, 0.05), transparent 70%);
+  font-size: 15px;
+}
+
+/* ---------------------------------------------------------------- Контакты: ссылки, ловушка, ошибки */
+
+.contact__channels a:hover,
+.contact__links a:hover {
+  color: var(--green);
+}
+.contact__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 22px 0 0;
+  padding: 0;
+  list-style: none;
+}
+.contact__links a {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  padding: 0 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: 13.5px;
+}
+.form__hp {
+  position: absolute;
+  left: -10000px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.form__alert {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(255, 107, 107, 0.4);
+  border-radius: 12px;
+  background: rgba(255, 107, 107, 0.06);
+  font-size: 14px;
+  color: #ffb0b0;
+}
+.form-done__badge--ok {
+  color: var(--green);
+}
+.form .btn[disabled] {
+  opacity: 0.6;
+  cursor: progress;
+}

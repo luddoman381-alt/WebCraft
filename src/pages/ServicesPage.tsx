@@ -8,6 +8,7 @@ import { Link, useRouter } from '../lib/router'
 import { ROUTES } from '../lib/routes'
 import { useDocumentMeta } from '../hooks/useDocumentMeta'
 import { useReducedMotion } from '../hooks/useMediaQuery'
+import { useSiteSettings } from '../data/useSiteSettings'
 
 const SORTS: { id: ServiceSort; label: string }[] = [
   { id: 'recommended', label: 'Рекомендуемые' },
@@ -32,6 +33,7 @@ export function ServicesPage({ preview = false }: Props) {
   const res = useResource(catalogResource, invalidateCatalog)
   const { location, query, navigateDirect } = useRouter()
   const reducedMotion = useReducedMotion()
+  const { cta } = useSiteSettings()
   const arrivedByDive = !preview && !!location.state.dive
 
   // Фильтры: источник истины — URL (?q=&category=&sort=), локальное состояние — для ввода
@@ -215,7 +217,14 @@ export function ServicesPage({ preview = false }: Props) {
         {data && results.length > 0 && (
           <div className="grid">
             {results.map((s, i) => (
-              <ServiceCard key={s.id} service={s} category={catById.get(s.category)} index={i} animate={animateCards} />
+              <ServiceCard
+                key={s.id}
+                service={s}
+                category={catById.get(s.category)}
+                index={i}
+                animate={animateCards}
+                terminal={!preview}
+              />
             ))}
           </div>
         )}
@@ -242,11 +251,11 @@ export function ServicesPage({ preview = false }: Props) {
 
       <section className="cta-band">
         <div>
-          <h2 className="cta-band__title">Не нашли подходящую услугу?</h2>
-          <p className="cta-band__text">Расскажите о задаче — предложим решение и рассчитаем стоимость под ваш объём работ.</p>
+          <h2 className="cta-band__title">{cta.catalogTitle}</h2>
+          <p className="cta-band__text">{cta.catalogText}</p>
         </div>
         <Link to={ROUTES.contact.pattern} className="btn btn--primary">
-          Обсудить проект <span aria-hidden="true">→</span>
+          {cta.catalogButton} <span aria-hidden="true">→</span>
         </Link>
       </section>
 

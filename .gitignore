@@ -22,3 +22,7 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# WebCraft: данные и секреты не попадают в репозиторий
+/data/
+/.env

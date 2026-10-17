@@ -1,7 +1,8 @@
 import { useId, useState, type FormEvent } from 'react'
 import { catalogResource } from '../data/repository'
 import { useResource } from '../data/useResource'
-import { SITE_CONTACTS } from '../data/site'
+import { useSiteSettings } from '../data/useSiteSettings'
+import { api, ApiError } from '../data/http'
 import { Footer } from '../components/Footer'
 import { useRouter } from '../lib/router'
 import { ROUTES } from '../lib/routes'
@@ -10,22 +11,24 @@ import { useDocumentMeta } from '../hooks/useDocumentMeta'
 type Fields = { name: string; contact: string; service: string; message: string; consent: boolean }
 type Errors = Partial<Record<keyof Fields, string>>
 
+/** Те же правила, что и на сервере — ошибки видны до отправки. */
 function validate(f: Fields): Errors {
   const e: Errors = {}
   if (f.name.trim().length < 2) e.name = 'Укажите имя'
   const c = f.contact.trim()
-  const looksLikeEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c)
-  const looksLikePhone = /^\+?[\d\s()-]{7,}$/.test(c)
-  const looksLikeTg = /^@[\w\d_]{4,}$/.test(c)
-  if (!looksLikeEmail && !looksLikePhone && !looksLikeTg) e.contact = 'Email, телефон или @username в Telegram'
+  const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(c) || /^\+?[\d\s()-]{7,}$/.test(c) || /^@\w{4,}$/.test(c)
+  if (!ok) e.contact = 'Email, телефон или @username в Telegram'
   if (f.message.trim().length < 10) e.message = 'Опишите задачу хотя бы в паре предложений'
   if (!f.consent) e.consent = 'Нужно согласие на обработку данных'
   return e
 }
 
+const telegramUrl = (t: string) => (t.startsWith('@') ? `https://t.me/${t.slice(1)}` : t.startsWith('https://') ? t : null)
+
 export function ContactPage() {
   const { query } = useRouter()
   const catalog = useResource(catalogResource)
+  const { contacts, cta } = useSiteSettings()
   useDocumentMeta(ROUTES.contact.title, ROUTES.contact.description)
   const uid = useId()
 
@@ -36,25 +39,45 @@ export function ContactPage() {
     message: '',
     consent: false,
   }))
+  // поле-ловушка для ботов: скрыто от людей
+  const [website, setWebsite] = useState('')
   const [errors, setErrors] = useState<Errors>({})
-  const [submitted, setSubmitted] = useState(false)
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
+  const [serverError, setServerError] = useState('')
 
   const set = <K extends keyof Fields>(k: K, v: Fields[K]) => {
     setFields((f) => ({ ...f, [k]: v }))
     if (errors[k]) setErrors((e) => ({ ...e, [k]: undefined }))
   }
 
-  const onSubmit = (e: FormEvent) => {
+  const focusFirst = (errs: Errors) => {
+    const first = Object.keys(errs)[0]
+    if (first) document.getElementById(`${uid}-${first}`)?.focus()
+  }
+
+  const onSubmit = async (e: FormEvent) => {
     e.preventDefault()
+    if (state === 'sending') return
     const errs = validate(fields)
     setErrors(errs)
-    const first = Object.keys(errs)[0]
-    if (first) {
-      document.getElementById(`${uid}-${first}`)?.focus()
-      return
+    if (Object.keys(errs).length) return focusFirst(errs)
+    setState('sending')
+    setServerError('')
+    try {
+      await api('/api/leads', {
+        method: 'POST',
+        body: { ...fields, service: fields.service || null, website, page: window.location.pathname + window.location.search },
+      })
+      setState('sent')
+    } catch (err) {
+      const apiErr = err instanceof ApiError ? err : null
+      if (apiErr && Object.keys(apiErr.fields).length) {
+        setErrors(apiErr.fields as Errors)
+        focusFirst(apiErr.fields as Errors)
+      }
+      setServerError(apiErr?.message ?? 'Не удалось отправить заявку')
+      setState('error')
     }
-    // Backend ещё не подключён: данные не отправляются и не сохраняются
-    setSubmitted(true)
   }
 
   const services = catalog.data?.services ?? []
@@ -63,6 +86,7 @@ export function ContactPage() {
     'aria-invalid': !!errors[k] || undefined,
     'aria-describedby': errors[k] ? `${uid}-${k}-err` : undefined,
   })
+  const tg = contacts.telegram ? telegramUrl(contacts.telegram) : null
 
   return (
     <main className="page contact" id="main">
@@ -72,46 +96,79 @@ export function ContactPage() {
             <span className="eyebrow__dot" aria-hidden="true" />
             КОНТАКТЫ
           </p>
-          <h1 className="page-hero__title">
-            Обсудим <span className="accent">ваш проект</span>
-          </h1>
-          <p className="page-hero__lead">
-            Опишите задачу в свободной форме. Ответим, уточним детали и предложим, как построить работу.
-          </p>
+          <h1 className="page-hero__title">{cta.contactTitle}</h1>
+          <p className="page-hero__lead">{cta.contactLead}</p>
           <dl className="contact__channels">
-            <div>
-              <dt>Email</dt>
-              <dd>{SITE_CONTACTS.email}</dd>
-            </div>
-            <div>
-              <dt>Telegram</dt>
-              <dd>{SITE_CONTACTS.telegram}</dd>
-            </div>
-            <div>
-              <dt>Время работы</dt>
-              <dd>{SITE_CONTACTS.hours}</dd>
-            </div>
+            {contacts.email && (
+              <div>
+                <dt>Email</dt>
+                <dd>
+                  <a href={`mailto:${contacts.email}`}>{contacts.email}</a>
+                </dd>
+              </div>
+            )}
+            {contacts.phone && (
+              <div>
+                <dt>Телефон</dt>
+                <dd>
+                  <a href={`tel:${contacts.phone.replace(/[^\d+]/g, '')}`}>{contacts.phone}</a>
+                </dd>
+              </div>
+            )}
+            {contacts.telegram && (
+              <div>
+                <dt>Telegram</dt>
+                <dd>{tg ? <a href={tg} target="_blank" rel="noopener noreferrer">{contacts.telegram}</a> : contacts.telegram}</dd>
+              </div>
+            )}
+            {contacts.hours && (
+              <div>
+                <dt>Время работы</dt>
+                <dd>{contacts.hours}</dd>
+              </div>
+            )}
+            {contacts.address && (
+              <div>
+                <dt>Адрес</dt>
+                <dd>{contacts.address}</dd>
+              </div>
+            )}
           </dl>
-          {SITE_CONTACTS.placeholder && <p className="contact__placeholder">Контакты — временные заполнители.</p>}
+          {contacts.links.length > 0 && (
+            <ul className="contact__links">
+              {contacts.links.map((l) => (
+                <li key={l.url}>
+                  <a href={l.url} target="_blank" rel="noopener noreferrer">
+                    {l.label} <span aria-hidden="true">↗</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
         </header>
 
         <div className="contact__form-wrap">
-          {submitted ? (
+          {state === 'sent' ? (
             <div className="form-done" role="status">
-              <p className="form-done__badge">ДЕМО-РЕЖИМ</p>
-              <h2 className="form-done__title">Заявка сформирована, но не отправлена</h2>
-              <p className="form-done__text">
-                Отправка заявок подключается на этапе backend. Сейчас данные формы никуда не передаются и не сохраняются.
-              </p>
-              <button type="button" className="btn btn--ghost btn--sm" onClick={() => setSubmitted(false)}>
-                Вернуться к форме
+              <p className="form-done__badge form-done__badge--ok">ЗАЯВКА ОТПРАВЛЕНА</p>
+              <h2 className="form-done__title">Спасибо! Мы получили вашу заявку</h2>
+              <p className="form-done__text">Свяжемся с вами по указанному контакту в рабочее время.</p>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={() => {
+                  setFields((f) => ({ ...f, message: '' }))
+                  setState('idle')
+                }}
+              >
+                Отправить ещё одну
               </button>
             </div>
           ) : (
-            <form className="form" onSubmit={onSubmit} noValidate>
+            <form className="form" onSubmit={onSubmit} noValidate aria-busy={state === 'sending'}>
               <div className="form__row">
                 <label htmlFor={`${uid}-name`}>Имя</label>
-                <input {...fieldProps('name')} value={fields.name} onChange={(e) => set('name', e.target.value)} autoComplete="name" />
+                <input {...fieldProps('name')} value={fields.name} onChange={(e) => set('name', e.target.value)} autoComplete="name" maxLength={100} />
                 {errors.name && <p className="form__error" id={`${uid}-name-err`}>{errors.name}</p>}
               </div>
               <div className="form__row">
@@ -121,6 +178,7 @@ export function ContactPage() {
                   value={fields.contact}
                   onChange={(e) => set('contact', e.target.value)}
                   placeholder="Email, телефон или @telegram"
+                  maxLength={120}
                 />
                 {errors.contact && <p className="form__error" id={`${uid}-contact-err`}>{errors.contact}</p>}
               </div>
@@ -145,23 +203,27 @@ export function ContactPage() {
                   value={fields.message}
                   onChange={(e) => set('message', e.target.value)}
                   placeholder="Что нужно сделать, есть ли сроки и текущий сайт"
+                  maxLength={4000}
                 />
                 {errors.message && <p className="form__error" id={`${uid}-message-err`}>{errors.message}</p>}
               </div>
+              <div className="form__hp" aria-hidden="true">
+                <label htmlFor={`${uid}-website`}>Сайт</label>
+                <input id={`${uid}-website`} tabIndex={-1} autoComplete="off" value={website} onChange={(e) => setWebsite(e.target.value)} />
+              </div>
               <div className="form__row form__row--check">
-                <input
-                  type="checkbox"
-                  {...fieldProps('consent')}
-                  checked={fields.consent}
-                  onChange={(e) => set('consent', e.target.checked)}
-                />
+                <input type="checkbox" {...fieldProps('consent')} checked={fields.consent} onChange={(e) => set('consent', e.target.checked)} />
                 <label htmlFor={`${uid}-consent`}>Согласен на обработку персональных данных</label>
                 {errors.consent && <p className="form__error" id={`${uid}-consent-err`}>{errors.consent}</p>}
               </div>
-              <button type="submit" className="btn btn--primary">
-                Отправить заявку <span aria-hidden="true">→</span>
+              {state === 'error' && serverError && (
+                <p className="form__alert" role="alert">
+                  {serverError}
+                </p>
+              )}
+              <button type="submit" className="btn btn--primary" disabled={state === 'sending'}>
+                {state === 'sending' ? 'Отправляем…' : cta.contactSubmit} {state !== 'sending' && <span aria-hidden="true">→</span>}
               </button>
-              <p className="form__note">Демо-режим: отправка на сервер будет подключена на следующем этапе.</p>
             </form>
           )}
         </div>
