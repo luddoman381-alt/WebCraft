@@ -20,6 +20,8 @@ import { legacyHashRedirect, matchPath, type Match } from './routes'
  */
 
 export type NavState = {
+  /** страница открыта переходом между режимами WebCraft ⇄ UpBusiness */
+  realm?: boolean
   /** переход выполнен анимацией погружения — страница не играет вход и встаёт на scroll */
   dive?: boolean
   scroll?: number

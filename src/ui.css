@@ -1282,208 +1282,392 @@
   }
 }
 
-/* ---------------------------------------------------------------- Направления: WebCraft / UpBusiness */
+/* ---------------------------------------------------------------- Режимы сайта: WebCraft ⇄ UpBusiness */
 
-.brands {
-  display: inline-flex;
-  align-items: stretch;
-  gap: 0;
-  margin: 0 0 30px;
-  border: 1px solid var(--line);
-  border-radius: 18px;
-  background: rgba(10, 15, 12, 0.6);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+/* Тема UpBusiness для общих элементов (шапка, кнопки, подвал) */
+.app.is-ub {
+  --green: #4da3ff;
+  --green-2: #2f6bff;
+  --line: rgba(77, 163, 255, 0.16);
+  --line-strong: rgba(77, 163, 255, 0.42);
 }
-.brands__sep {
-  width: 1px;
-  margin: 12px 0;
-  background: linear-gradient(180deg, transparent, var(--line-strong), transparent);
+.app.is-ub .nav__mark {
+  color: #6cc4ff;
 }
-.brand {
-  --brand-glow: 57, 255, 136;
+.app.is-ub .btn--primary {
+  color: #020814;
+}
+
+.realm-switch {
+  --wc: 57, 255, 136;
+  --ub: 77, 163, 255;
+  --c: var(--wc);
   position: relative;
   display: grid;
-  grid-template-columns: auto auto;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
-  column-gap: 10px;
-  row-gap: 3px;
-  padding: 12px 20px 12px 16px;
-  border-radius: 17px;
-  color: var(--text);
+  height: 40px;
+  margin-right: auto;
+  margin-left: clamp(12px, 2vw, 28px);
+  padding: 3px;
+  border-radius: 999px;
+  border: 1px solid rgba(var(--c), 0.28);
+  background: rgba(6, 10, 9, 0.72);
+  box-shadow: inset 0 0 18px -10px rgba(var(--c), 0.6);
+  isolation: isolate;
+  overflow: hidden;
   transition:
-    background-color 0.5s var(--ease),
-    box-shadow 0.5s var(--ease);
+    border-color 0.7s var(--ease),
+    box-shadow 0.7s var(--ease);
 }
-.brand__name {
-  font-family: var(--font-display);
-  font-size: clamp(15px, 1.25vw, 18px);
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-shadow: 0 0 14px rgba(var(--brand-glow), 0.55);
-  transition: text-shadow 0.5s var(--ease), color 0.5s var(--ease);
+.realm-switch.is-ub {
+  --c: var(--ub);
+  background: rgba(4, 8, 20, 0.78);
 }
-.brand__sub {
-  grid-column: 2 / -1;
-  font-family: var(--font-mono);
-  font-size: 10.5px;
-  letter-spacing: 0.08em;
-  color: var(--text-2);
+.realm-switch__thumb {
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc(50% - 3px);
+  border-radius: 999px;
+  background: linear-gradient(100deg, rgba(var(--c), 0.22), rgba(var(--c), 0.1));
+  box-shadow:
+    inset 0 0 0 1px rgba(var(--c), 0.55),
+    0 0 22px -4px rgba(var(--c), 0.7);
+  transition:
+    transform 0.65s cubic-bezier(0.7, 0, 0.2, 1),
+    background 0.7s var(--ease),
+    box-shadow 0.7s var(--ease);
 }
-.brand__dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgb(var(--brand-glow));
-  box-shadow: 0 0 10px rgb(var(--brand-glow));
-  transition: background-color 0.5s var(--ease), box-shadow 0.5s var(--ease);
+.realm-switch.is-ub .realm-switch__thumb {
+  transform: translateX(100%);
 }
-.brand--wc {
-  background: rgba(57, 255, 136, 0.05);
-}
-.brand--ub {
-  grid-template-columns: auto auto auto;
-  cursor: pointer;
-}
-.brand--ub .brand__sub {
-  grid-column: 2 / 3;
-}
-.brand__arrow {
-  grid-row: 1 / 3;
-  grid-column: 3;
-  margin-left: 6px;
-  color: rgb(var(--brand-glow));
-  transition: transform 0.45s var(--ease), color 0.5s var(--ease);
-}
-/* наведение на UpBusiness — свечение уходит в синий: превью перехода */
-.brand--ub:hover,
-.brand--ub:focus-visible {
-  --brand-glow: 77, 163, 255;
-  background: rgba(40, 110, 255, 0.08);
-  box-shadow: inset 0 0 0 1px rgba(77, 163, 255, 0.45), 0 0 34px -8px rgba(77, 163, 255, 0.6);
-}
-.brand--ub:hover .brand__arrow,
-.brand--ub:focus-visible .brand__arrow {
-  transform: translateX(4px);
-}
-.brand--ub:active {
-  box-shadow: inset 0 0 0 1px rgba(77, 163, 255, 0.8), 0 0 50px -6px rgba(77, 163, 255, 0.9);
-}
-
-@media (max-width: 720px) {
-  .brands {
-    display: flex;
-    width: 100%;
-    margin-bottom: 20px;
-  }
-  .brand {
-    flex: 1;
-    padding: 10px 12px;
-    column-gap: 8px;
-  }
-  .brand__name {
-    font-size: 13px;
-    letter-spacing: 0.16em;
-  }
-  .brand__sub {
-    font-size: 9.5px;
-  }
-  .brand__arrow {
-    display: none;
-  }
-}
-
-/* ---------------------------------------------------------------- Смена атмосферы: WebCraft → UpBusiness */
-
-.realm {
-  position: fixed;
-  inset: 0;
-  z-index: 120;
-  pointer-events: none;
-  /* точка нажатия — центр, откуда расходится свет */
-  --x: 50%;
-  --y: 50%;
-}
-.realm__green,
-.realm__blue,
-.realm__veil {
+/* импульс энергии, пробегающий по переключателю во время перехода */
+.realm-switch__pulse {
   position: absolute;
   inset: 0;
-}
-.realm__green {
-  background: radial-gradient(circle at var(--x) var(--y), rgba(57, 255, 136, 0.55) 0, rgba(57, 255, 136, 0.12) 18%, transparent 46%);
+  z-index: -1;
+  background: linear-gradient(100deg, transparent 30%, rgba(160, 220, 255, 0.55) 50%, transparent 70%);
+  transform: translateX(-120%);
   opacity: 0;
-  animation: realm-green 1.25s var(--ease) both;
+  pointer-events: none;
 }
-.realm__blue {
-  background:
-    radial-gradient(circle at var(--x) var(--y), rgba(110, 190, 255, 0.85) 0, rgba(40, 110, 255, 0.35) 22%, rgba(6, 16, 40, 0) 60%),
-    radial-gradient(120% 90% at 50% 120%, rgba(30, 80, 220, 0.35), transparent 60%);
-  opacity: 0;
-  transform: scale(0.6);
-  animation: realm-blue 1.25s var(--ease) both;
+.realm-switch.is-busy .realm-switch__pulse {
+  animation: realm-pulse 0.9s var(--ease) 2;
 }
-.realm__veil {
-  background: #03060e;
-  opacity: 0;
-  animation: realm-veil 1.25s var(--ease) both;
-}
-@keyframes realm-green {
+@keyframes realm-pulse {
   0% {
-    opacity: 0;
-  }
-  22% {
     opacity: 1;
-  }
-  55% {
-    opacity: 0;
-  }
-}
-@keyframes realm-blue {
-  15% {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-  55% {
-    opacity: 1;
+    transform: translateX(-120%);
   }
   100% {
-    opacity: 0.9;
-    transform: scale(2.2);
-  }
-}
-@keyframes realm-veil {
-  30% {
-    opacity: 0;
-  }
-  80%,
-  100% {
     opacity: 1;
+    transform: translateX(120%);
   }
 }
-/* после смены страницы оверлей растворяется, открывая UpBusiness */
-.realm.is-leaving {
-  animation: realm-out 0.9s var(--ease) both;
+.realm-switch.is-busy {
+  border-color: rgba(var(--c), 0.8);
+  box-shadow:
+    inset 0 0 18px -6px rgba(var(--c), 0.9),
+    0 0 30px -6px rgba(var(--c), 0.8);
 }
-@keyframes realm-out {
-  to {
-    opacity: 0;
+.realm-switch__opt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 100%;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 11.5px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  color: var(--text-2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color 0.5s var(--ease), text-shadow 0.5s var(--ease);
+}
+.realm-switch__opt:hover {
+  color: var(--text);
+}
+.realm-switch__opt.is-active {
+  color: #f2f8ff;
+  text-shadow: 0 0 12px rgba(var(--c), 0.8);
+  cursor: default;
+}
+.realm-switch__opt--wc:not(.is-active):hover .realm-switch__dot {
+  background: rgb(var(--wc));
+  box-shadow: 0 0 8px rgb(var(--wc));
+}
+.realm-switch__opt--ub:not(.is-active):hover .realm-switch__dot {
+  background: rgb(var(--ub));
+  box-shadow: 0 0 8px rgb(var(--ub));
+}
+.realm-switch__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(146, 158, 150, 0.5);
+  transition: background-color 0.5s var(--ease), box-shadow 0.5s var(--ease);
+}
+.realm-switch__opt--wc.is-active .realm-switch__dot {
+  background: rgb(var(--wc));
+  box-shadow: 0 0 10px rgb(var(--wc));
+}
+.realm-switch__opt--ub.is-active .realm-switch__dot {
+  background: #9fdcff;
+  box-shadow: 0 0 10px rgb(var(--ub));
+}
+.nav--preview .realm-switch__opt {
+  cursor: default;
+}
+
+@media (max-width: 1100px) {
+  .realm-switch__opt {
+    padding: 0 12px;
+    letter-spacing: 0.14em;
   }
 }
-.realm.is-reduced .realm__green,
-.realm.is-reduced .realm__blue {
-  display: none;
-}
-.realm.is-reduced .realm__veil {
-  animation-duration: 0.25s;
-}
-@media (max-width: 420px) {
-  /* на телефоне — только названия: блок остаётся низким и не наезжает на сцену */
-  .brand__sub {
+@media (max-width: 520px) {
+  /* на телефоне логотип — только знак, переключатель — компактный */
+  .nav__brand-text {
     display: none;
   }
-  .brand {
-    justify-content: center;
-    padding: 11px 10px;
+  .realm-switch {
+    height: 36px;
+    margin-left: 12px;
+  }
+  .realm-switch__opt {
+    padding: 0 10px;
+    gap: 6px;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+}
+@media (max-width: 360px) {
+  .realm-switch__dot {
+    display: none;
+  }
+}
+
+/* полноэкранный слой перехода между режимами (живёт ≈2 с) */
+.realm-fx {
+  position: fixed;
+  inset: 0;
+  z-index: 130;
+  width: 100%;
+  height: 100%;
+  pointer-events: auto;
+  cursor: progress;
+}
+
+/* ---------------------------------------------------------------- Бренд-блок и смена темы */
+
+/* цвета темы — типизированные свойства, чтобы при смене режима они плавно перетекали */
+@property --green {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #39ff88;
+}
+@property --green-2 {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #17c964;
+}
+@property --line {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(57, 255, 136, 0.14);
+}
+@property --line-strong {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: rgba(57, 255, 136, 0.38);
+}
+.app {
+  transition:
+    --green 0.9s var(--ease),
+    --green-2 0.9s var(--ease),
+    --line 0.9s var(--ease),
+    --line-strong 0.9s var(--ease);
+}
+
+/* во время перехода шапка — над световым слоем: видно, как меняется бренд */
+.app.is-realm .nav {
+  z-index: 140;
+  pointer-events: none;
+}
+.nav__line {
+  position: relative;
+}
+/* от переключателя по линии шапки расходится световой импульс */
+.app.is-realm .nav__line::after {
+  content: '';
+  position: absolute;
+  inset: -1px 0;
+  background: linear-gradient(90deg, transparent, rgba(57, 255, 136, 0.95) 30%, rgba(190, 255, 220, 1) 34%, rgba(57, 255, 136, 0.9) 38%, transparent);
+  box-shadow: 0 0 12px rgba(57, 255, 136, 0.7);
+  transform-origin: 32% 50%;
+  animation: nav-line-surge 1.4s var(--ease) both;
+}
+.app.is-realm.is-ub .nav__line::after {
+  background: linear-gradient(90deg, transparent, rgba(77, 163, 255, 0.95) 30%, rgba(200, 240, 255, 1) 34%, rgba(77, 163, 255, 0.9) 38%, transparent);
+  box-shadow: 0 0 14px rgba(77, 163, 255, 0.8);
+}
+@keyframes nav-line-surge {
+  0% {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+  25% {
+    opacity: 1;
+  }
+  70% {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+  100% {
+    opacity: 0;
+    transform: scaleX(1);
+  }
+}
+
+.nav__mark {
+  position: relative;
+  overflow: hidden;
+  transition:
+    color 0.8s var(--ease),
+    border-color 0.8s var(--ease),
+    background-color 0.8s var(--ease),
+    box-shadow 0.8s var(--ease);
+}
+.nav__mark-icon {
+  grid-area: 1 / 1;
+  display: grid;
+  transition:
+    opacity 0.55s var(--ease),
+    transform 0.7s var(--ease);
+}
+.nav__brand.is-wc .nav__mark-icon--ub,
+.nav__brand.is-ub .nav__mark-icon--wc {
+  opacity: 0;
+  transform: scale(0.55) rotate(-40deg);
+}
+.nav__brand.is-ub .nav__mark {
+  color: #7fd0ff;
+  border-color: rgba(77, 163, 255, 0.42);
+  background-color: rgba(5, 12, 30, 0.8);
+  box-shadow:
+    0 0 22px -6px rgba(77, 163, 255, 0.75),
+    inset 0 0 14px -6px rgba(108, 214, 255, 0.7);
+}
+.nav__brand.is-ub:hover .nav__mark {
+  box-shadow:
+    0 0 28px -4px rgba(77, 163, 255, 0.85),
+    inset 0 0 14px -6px rgba(108, 214, 255, 0.8);
+}
+.nav__name,
+.nav__tagline {
+  display: grid;
+  white-space: nowrap;
+}
+.nav__sizer,
+.nav__live {
+  grid-area: 1 / 1;
+}
+.nav__sizer {
+  visibility: hidden;
+}
+.nav__name {
+  letter-spacing: 0.035em;
+  transition: filter 0.8s var(--ease);
+}
+.nav__live {
+  transition: color 0.8s var(--ease);
+}
+.nav__brand.is-wc .nav__name .nav__live {
+  text-shadow: 0 0 18px rgba(57, 255, 136, 0.25);
+}
+.nav__brand.is-ub .nav__name .nav__live {
+  background: linear-gradient(100deg, #f2faff 0%, #8fdcff 45%, #4d8dff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.nav__brand.is-ub .nav__name {
+  filter: drop-shadow(0 0 10px rgba(77, 163, 255, 0.55));
+}
+.nav__brand.is-wc .nav__tagline .nav__live {
+  color: var(--text-2);
+}
+.nav__brand.is-ub .nav__tagline .nav__live {
+  color: #8cc6ff;
+  text-shadow: 0 0 12px rgba(77, 163, 255, 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app,
+  .nav__mark,
+  .nav__mark-icon,
+  .nav__live {
+    transition: none;
+  }
+  .app.is-realm .nav__line::after {
+    display: none;
+  }
+}
+
+/* шапка на средних экранах: бренд с длинной подписью, переключатель и меню помещаются в одну строку */
+.realm-switch {
+  flex-shrink: 0;
+}
+.nav__link {
+  white-space: nowrap;
+}
+@media (max-width: 1320px) {
+  .nav__links {
+    gap: 18px;
+  }
+  .nav__link {
+    padding: 10px 10px;
+  }
+  .nav__link::after {
+    left: 10px;
+    right: 10px;
+  }
+  .nav__tagline {
+    letter-spacing: 0.04em;
+  }
+}
+@media (max-width: 1180px) {
+  .nav__bar {
+    gap: 14px;
+  }
+  .nav__divider {
+    display: none;
+  }
+  .nav__link {
+    padding: 10px 8px;
+    font-size: 14px;
+  }
+  .nav__tagline {
+    font-size: 9.5px;
+  }
+  .realm-switch {
+    margin-left: 14px;
+  }
+}
+.nav__brand {
+  flex-shrink: 0;
+}
+@media (min-width: 961px) and (max-width: 1100px) {
+  /* узкий десктоп: от бренда остаются знак и название */
+  .nav__tagline {
+    display: none;
   }
 }

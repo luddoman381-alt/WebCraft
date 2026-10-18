@@ -15,6 +15,9 @@ import { NotFoundPage } from './pages/NotFoundPage'
 import { hotspotEls } from './scene/hotspotBridge'
 import { dive, resetDiveChannels, screenAnchor, screenDom, setPhase, useDivePhase } from './dive/diveStore'
 import { useDiveController } from './dive/useDiveController'
+import { RealmTransition } from './realm/RealmTransition'
+import { setRealmHandler } from './realm/realmBus'
+import { setRealmState } from './realm/realmState'
 import { useReducedMotion } from './hooks/useMediaQuery'
 import { useDocumentMeta } from './hooks/useDocumentMeta'
 import { detectWebGL, isLowPowerDevice } from './lib/device'
@@ -109,27 +112,34 @@ export default function App() {
     diveCtl.start()
   }, [diveCtl])
 
-  /* ---------------------------------------------------------- переход в UpBusiness */
+  /* ---------------------------------------------------------- режимы WebCraft ⇄ UpBusiness */
 
-  // зелёный свет из точки нажатия сменяется сине-чёрной атмосферой, затем открывается раздел
-  const [realm, setRealm] = useState<{ x: number; y: number; leaving: boolean } | null>(null)
-  const realmTimers = useRef<number[]>([])
-  const startUpBusiness = useCallback(
-    (origin: { x: number; y: number }) => {
-      if (realm || dive.phase !== 'idle') return // защита от повторных нажатий и от наложения на погружение
-      setRealm({ ...origin, leaving: false })
-      const swap = reducedMotion ? 240 : 1050
-      realmTimers.current.push(
-        window.setTimeout(() => {
-          navigateDirect(ROUTES.upbusiness.pattern)
-          setRealm((r) => r && { ...r, leaving: true })
-        }, swap),
-        window.setTimeout(() => setRealm(null), swap + (reducedMotion ? 300 : 950)),
-      )
-    },
-    [realm, reducedMotion, navigateDirect],
-  )
-  useEffect(() => () => realmTimers.current.forEach((t) => window.clearTimeout(t)), [])
+  // переключатель в шапке просит переход; здесь — защита от повторов и смена страницы под пеленой
+  const [realm, setRealm] = useState<{ dir: 'toUB' | 'toWC'; origin: { x: number; y: number } } | null>(null)
+  const realmBusy = useRef(false)
+  useEffect(() => {
+    setRealmHandler(({ target, origin }) => {
+      if (realmBusy.current || dive.phase !== 'idle') return
+      const onUb = matchRef.current.id === 'upbusiness'
+      if ((target === 'ub') === onUb) return
+      realmBusy.current = true
+      setRealmState({ busy: true, target })
+      // чанк нового раздела грузится, пока идёт анимация
+      if (target === 'ub') void import('./pages/upbusiness/UpBusinessPage')
+      setFocus(null)
+      setRealm({ dir: target === 'ub' ? 'toUB' : 'toWC', origin })
+    })
+    return () => setRealmHandler(null)
+  }, [])
+  const realmSwap = useCallback(() => {
+    if (!realm) return
+    navigateDirect(realm.dir === 'toUB' ? ROUTES.upbusiness.pattern : ROUTES.home.pattern, { state: { realm: true } })
+  }, [realm, navigateDirect])
+  const realmDone = useCallback(() => {
+    realmBusy.current = false
+    setRealmState({ busy: false, target: null })
+    setRealm(null)
+  }, [])
 
   // Любой переход с главной на /services (кнопка, пункт меню, ноутбук) — через погружение
   const matchRef = useRef<Match>(match)
@@ -248,7 +258,9 @@ export default function App() {
         isHome ? 'is-home' : 'is-sub',
         diving ? 'is-diving' : '',
         phase === 'fading' ? 'is-fading' : '',
-        match.id === 'upbusiness' ? 'is-ub' : '',
+        // тема меняется с началом перехода (цвета плавно перетекают), страница — под пеленой
+        (realm ? realm.dir === 'toUB' : match.id === 'upbusiness') ? 'is-ub' : '',
+        realm ? 'is-realm' : '',
       ]
         .filter(Boolean)
         .join(' ')}
@@ -268,7 +280,6 @@ export default function App() {
           reducedMotion={reducedMotion}
           useFallback={useFallback}
           onExplore={startDive}
-          onUpBusiness={startUpBusiness}
           onFocus={setFocus}
           onHover={setHovered}
           onBack={back}
@@ -321,15 +332,14 @@ export default function App() {
       {isHome && !useFallback && <Loader stage={stage} done={ready} />}
 
       {realm && (
-        <div
-          className={`realm${realm.leaving ? ' is-leaving' : ''}${reducedMotion ? ' is-reduced' : ''}`}
-          style={{ '--x': `${realm.x}px`, '--y': `${realm.y}px` } as React.CSSProperties}
-          aria-hidden="true"
-        >
-          <div className="realm__green" />
-          <div className="realm__veil" />
-          <div className="realm__blue" />
-        </div>
+        <RealmTransition
+          dir={realm.dir}
+          origin={realm.origin}
+          reducedMotion={reducedMotion}
+          lowPower={lowPower}
+          onSwap={realmSwap}
+          onDone={realmDone}
+        />
       )}
     </div>
   )
@@ -372,20 +382,19 @@ type HomeProps = {
   reducedMotion: boolean
   useFallback: boolean
   onExplore: () => void
-  onUpBusiness: (origin: { x: number; y: number }) => void
   onFocus: (t: FocusTarget) => void
   onHover: (t: FocusTarget) => void
   onBack: () => void
   onLaptop: () => void
 }
 
-function HomeOverlay({ ready, busy, focus, hovered, reducedMotion, useFallback, onExplore, onUpBusiness, onFocus, onHover, onBack, onLaptop }: HomeProps) {
+function HomeOverlay({ ready, busy, focus, hovered, reducedMotion, useFallback, onExplore, onFocus, onHover, onBack, onLaptop }: HomeProps) {
   useDocumentMeta(ROUTES.home.title, ROUTES.home.description)
   const hideHero = !!focus || busy
 
   return (
     <main className="stage" id="main" tabIndex={-1}>
-      <Hero ready={ready} hidden={hideHero} reducedMotion={reducedMotion} onExplore={onExplore} onUpBusiness={onUpBusiness} />
+      <Hero ready={ready} hidden={hideHero} reducedMotion={reducedMotion} onExplore={onExplore} />
       {!useFallback && (
         <Hotspots
           hidden={!!focus || !ready || busy}

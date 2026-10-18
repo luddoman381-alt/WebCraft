@@ -1,18 +1,20 @@
-import { LogoMark } from './Logo'
+import { LogoMark, UbMark } from './Logo'
 import { Link } from '../lib/router'
 import { NAV_ITEMS, ROUTES } from '../lib/routes'
 
-export function Footer() {
+/** Подвал; в разделе UpBusiness показывает его название и знак. */
+export function Footer({ realm = 'wc' }: { realm?: 'wc' | 'ub' }) {
+  const ub = realm === 'ub'
   return (
     <footer className="footer">
       <div className="footer__inner">
         <div className="footer__brand">
           <span className="nav__mark">
-            <LogoMark size={22} />
+            {ub ? <UbMark size={22} /> : <LogoMark size={22} />}
           </span>
           <div>
-            <p className="footer__name">WebCraft</p>
-            <p className="footer__tag">Сайты и автоматизация</p>
+            <p className="footer__name">{ub ? 'UpBusiness' : 'WebCraft'}</p>
+            <p className="footer__tag">{ub ? 'Технологии для роста бизнеса' : 'Сайты и автоматизация'}</p>
           </div>
         </div>
         <nav className="footer__nav" aria-label="Навигация в подвале">
@@ -26,7 +28,7 @@ export function Footer() {
         <p className="footer__note">
           Каталог наполнен демонстрационными записями: состав услуг и тексты будут заменены реальным контентом.
         </p>
-        <p className="footer__copy">© 2026 WebCraft</p>
+        <p className="footer__copy">{ub ? '© 2026 UpBusiness · WebCraft' : '© 2026 WebCraft'}</p>
       </div>
     </footer>
   )

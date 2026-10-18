@@ -1,8 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
-import { LogoMark } from './Logo'
+import { NavBrand } from './NavBrand'
 import { Link, useRouter } from '../lib/router'
 import { NAV_ITEMS, ROUTES, type RouteId } from '../lib/routes'
 import { useSiteSettings } from '../data/useSiteSettings'
+import { RealmSwitch } from './RealmSwitch'
+import { useRealmBusy } from '../realm/realmState'
 
 type Props = {
   onHome?: () => void
@@ -80,18 +82,13 @@ type ViewProps = {
 
 function NavbarView({ current, preview, open = false, onToggle, onHome, panelRef, toggleRef }: ViewProps) {
   const { cta } = useSiteSettings()
+  const busy = useRealmBusy()
   return (
     <header className={`nav${open ? ' is-open' : ''}${preview ? ' nav--preview' : ''}`}>
       <div className="nav__bar">
-        <Link className="nav__brand" to={ROUTES.home.pattern} onClick={onHome} aria-label="WebCraft — на главную">
-          <span className="nav__mark">
-            <LogoMark />
-          </span>
-          <span className="nav__brand-text">
-            <span className="nav__name">WebCraft</span>
-            <span className="nav__tagline">Сайты и автоматизация</span>
-          </span>
-        </Link>
+        <NavBrand realm={current === 'upbusiness' ? 'ub' : 'wc'} onHome={onHome} preview={preview} />
+
+        <RealmSwitch current={current === 'upbusiness' ? 'ub' : 'wc'} preview={preview} busy={busy} />
 
         <nav className="nav__links" aria-label={preview ? undefined : 'Основная навигация'}>
           <ul>

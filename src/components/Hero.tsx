@@ -1,6 +1,6 @@
 import { useLayoutEffect, useRef } from 'react'
 import gsap from 'gsap'
-import { Link, withBase } from '../lib/router'
+import { Link } from '../lib/router'
 import { ROUTES } from '../lib/routes'
 import { useSiteSettings } from '../data/useSiteSettings'
 
@@ -9,11 +9,9 @@ type Props = {
   hidden: boolean
   reducedMotion: boolean
   onExplore: () => void
-  /** переход в раздел UpBusiness (точка нажатия — центр смены атмосферы) */
-  onUpBusiness: (origin: { x: number; y: number }) => void
 }
 
-export function Hero({ ready, hidden, reducedMotion, onExplore, onUpBusiness }: Props) {
+export function Hero({ ready, hidden, reducedMotion, onExplore }: Props) {
   const root = useRef<HTMLElement>(null)
   const { cta } = useSiteSettings()
 
@@ -37,32 +35,10 @@ export function Hero({ ready, hidden, reducedMotion, onExplore, onUpBusiness }: 
   return (
     <section ref={root} className={`hero${hidden ? ' is-hidden' : ''}`} aria-labelledby="hero-title" aria-hidden={hidden}>
       <div className="hero__inner">
-        {/* два направления сайта: WebCraft (текущее) и UpBusiness */}
-        <nav className="brands" aria-label="Направления" data-reveal>
-          <span className="brand brand--wc" aria-current="page">
-            <span className="hero__pulse" aria-hidden="true" />
-            <span className="brand__name">WEBCRAFT</span>
-            <span className="brand__sub">Сайты и автоматизация</span>
-          </span>
-          <span className="brands__sep" aria-hidden="true" />
-          <a
-            href={withBase(ROUTES.upbusiness.pattern)}
-            className="brand brand--ub"
-            tabIndex={hidden ? -1 : 0}
-            onClick={(e) => {
-              if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey) return
-              e.preventDefault()
-              onUpBusiness({ x: e.clientX, y: e.clientY })
-            }}
-          >
-            <span className="brand__dot" aria-hidden="true" />
-            <span className="brand__name">UPBUSINESS</span>
-            <span className="brand__sub">Технологии для бизнеса</span>
-            <span className="brand__arrow" aria-hidden="true">
-              →
-            </span>
-          </a>
-        </nav>
+        <p className="hero__eyebrow" data-reveal>
+          <span className="hero__pulse" aria-hidden="true" />
+          WEBCRAFT STUDIO <span className="hero__sep">/</span> 2026
+        </p>
 
         <h1 id="hero-title" className="hero__title" data-reveal>
           Создаём цифровые продукты <span className="hero__accent">нового&nbsp;уровня</span>
